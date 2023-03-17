@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang = "en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Draft: Funding Distribution Dashboard</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script src="https://api.tiles.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.js"></script>
+        <link
+            href="https://api.tiles.mapbox.com/mapbox-gl-js/v2.13.0/mapbox-gl.css"
+            rel="stylesheet"
+        />
+        <style>
+            body {
+                margin: 0;
+                padding: 0;
+                font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            }
+            #map {
+                position: absolute;
+                top: 0;
+                bottom: 0;
+                width: 100%;
+            }
+            h1 {
+                font-size: 14px;
+                line-height: 20px;
+                margin-bottom: 10px;
+            }
+
+            a {
+                text-decoration: none;
+                color: #2dc4b2;
+            }
+
+            #console {
+                position: absolute;
+                margin: 10px;
+                width: 240px;
+                background-color: white;
+                padding: 10px 20px;
+            
+            }
+            .session {
+                margin-bottom: 20px;
+            }
+            .row {
+                height: 12px;
+                width: 100%
+            }
+            .colors {
+                background: linear-gradient(
+                    to right,
+                    #2dc4b2,
+                    #3bb3c3,
+                    #669ec4,
+                    #8b88b6,
+                    #a2719b,
+                    #aa5379
+                );
+                margin-bottom: 5px;
+            }
+            .label {
+                width: 15%;
+                display: inline-block;
+                text-align: center;
+            }
+            </style>
+    </head>
+
+    <body>
+        <div id="map"></div>
+        <div id="console">
+            <h1>Funding Allocations by Canadian Municipality</h1>
+            <p>
+                Data:
+                <a
+                    href="https://data.cityofnewyork.us/Public-Safety/NYPD-Motor-Vehicle-Collisions/h9gi-nx95"
+                    >Motor Vehilce Collision injuries and death</a
+                >
+                in NYC, Jan 2016
+            </p>
+            <!-- <div class="session">
+                <h2>Casualty</h2>
+                <div class="row colors"></div>
+                <div class="row labels">
+                    <div class="label">Fed</div>
+                    <div class="label">Prov</div>
+                    <div class="label">Mun</div>
+                </div>
+            </div> -->
+            <!-- <div class="session">
+                <h2>Hour: <label id="active-hour">12PM</label></h2>
+                <input
+                    id="slider"
+                    class="row"
+                    type="range"
+                    min="0"
+                    max="23"
+                    step="1"
+                    value="12"
+                />
+            </div> -->
+            <div class="session">
+                <h2>Level of Funding</h2>
+                <div class="row" id="filter">
+                    <input
+                        id="Fed"
+                        type="radio"
+                        name="toggle"
+                        value="Fed"
+                        checked="unchecked"
+                    />
+                    <label for="Fed">Fed</label>
+                    <input id="Prov" type="radio" name="toggle" value="Prov" />
+                    <label for="Prov">Prov</label>
+                    <input id="Mun" type="radio" name="toggle" value="Mun" />
+                    <label for="Mun">Mun</label>
+                </div>
+            </div>
+        </div>
+        <script>
+            mapboxgl.accessToken = 'pk.eyJ1IjoiYmVua2VuMzEiLCJhIjoiY2xleDJqNm1qMDF1ZzNxcnh3OGRiNHdtZSJ9.zWLqzNLvoSFtk951VZMrxg';
+            const map = new mapboxgl.Map({
+                container: 'map',
+                style: 'mapbox://styles/benken31/ckwmlbxhs16fj16lhu7gg8ny4',
+                center: [-92.776, 54.338],
+                zoom: 3.54
+            });
+
+            map.on('load', ()=>{
+                let filterFed = ['!=', ['number',['get', 'Sum of FedOpCont']], 16000000];
+                let filterProv = ['!=', ['number', ['get', 'Sum of ProvOpCont']], 950000000];
+                let filterMun = ['!=', ['number', ['get', 'Sum of MunOpCont']], 1500000000];
+
+                map.addSource('FedCont', {
+                    type: 'vector',
+                    url: 'mapbox://benken31.7isxe3hu'
+                });
+                map.addLayer({
+                    "id": 'FedCon',
+                    "type": 'circle',
+                    "source": 'FedCont',
+                    "source-layer": 'Members_Updated-2ab150',
+
+                    "paint": {
+                    //     'circle-radius': [
+                    //         'interpolate', ['linear'], ['number',['get', 'Sum of FedOpCont']],
+                    //         0,
+                    //         5,
+                    //         10,
+                    //         11,
+                    //         12,
+                    //         13,
+                    //         14,
+                    //         15,
+                    //     ],
+                    //     'circle-color': [
+                    //         'interpolate', ['linear'], ['number', ['get', 'Sum of FedOpCont']],
+                    //         0,
+                    //         '#2DC4B2',
+                    //         5,
+                    //         '#669EC4',
+                    //         10,
+                    //         '#A2719B',
+                    //         15,
+                    //         '#AA5E79'
+                    //     ],
+                        'circle-opacity':0.8
+                    },
+                    'filter': ['all', filterFed, filterProv, filterMun]
+
+
+                });
+                
+                map.on('click', 'FedCon', (e) => {
+// Copy coordinates array.
+                    const coordinates = e.features[0].geometry.coordinates.slice();
+                    const description = e.features[0].properties.Municipality;
+
+                    while (Math.abs(e.lngLat.lng - coordinates[0]) > 180) {
+                        coordinates[0] += e.lngLat.lng > coordinates[0] ? 360 : -360;
+                    }
+ 
+                    new mapboxgl.Popup()
+                    .setLngLat(coordinates)
+                    .setHTML(description)
+                    .addTo(map);
+                });
+                map.on('mouseenter', 'FedCon', () => {
+                    map.getCanvas().style.cursor = 'pointer';
+                });
+ 
+// Change it back to a pointer when it leaves.
+                map.on('mouseleave', 'FedCon', () => {
+                    map.getCanvas().style.cursor = '';
+                });
+                // document.getElementById('slider').addEventListener('input', (event)=>{
+                //     const hour = parseInt(event.target.value);
+                //     filterHour = ['==', ['number', ['get', 'Hour']], hour];
+                //     map.setFilter('collisions', ['all', filterHour, filterDay]);
+                //     const ampm = hour >= 12 ? 'PM':'AM';
+                //     const hour12 = hour % 12 ? hour % 12 : 12;
+
+                //     document.getElementById('active-hour').innerText = hour12 + ampm;
+                // });
+                document
+                    .getElementById('filter')
+                    .addEventListener('change', (event) => {
+                        const funding = event.target.value;
+
+                        if (funding === 'Fed') {
+                            filterFed = ['!=', ['number', ['get', 'Sum of FedOpCont']], 0];
+                                // filterProv = ['==', ['number',['get', 'Sum of Prov']], 950000000]
+                                // filterMun = ['>', ['number',['get', 'Sum of Mun']], 'placeholder']
+                                map.setFilter('FedCon', ['all', filterFed]);
+                        } else if (funding === 'Prov') {
+                            // filterFed = ['==', ['number',['get', 'Sum of FedOpCont']], 1600000];
+                            filterProv = ['!=', ['number',['get', 'Sum of ProvOpCont']], 0]
+                            // filterMun = ['==', ['number',['get', 'Sum of Mun']], 1500000000]
+                            map.setFilter('FedCon',['all', filterProv]);
+                        } else if (funding === 'Mun') {
+                            // filterFed = ['==',['number',['get','Sum of FedOpCont']], 16000000];
+                                // filterProv = ['==', ['number',['get', 'Sum of Prov']], 'placeholder']
+                            filterMun = ['!=', ['number',['get', 'Sum of MunOpCont']], 0]
+                            map.setFilter('FedCon', ['all', filterMun]);
+                        } else {
+                            console.error('error');
+                        }
+                        // map.setFilter('FedCon',['all', filterFed, filterProv, filterMun]);
+                });
+            });
+        </script>
+    </body>
+</html>
+
+
