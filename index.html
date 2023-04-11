@@ -72,12 +72,7 @@
         <div id="console">
             <h1>Funding Allocations by Canadian Municipality</h1>
             <p>
-                Data:
-                <a
-                    href="https://data.cityofnewyork.us/Public-Safety/NYPD-Motor-Vehicle-Collisions/h9gi-nx95"
-                    >Motor Vehilce Collision injuries and death</a
-                >
-                in NYC, Jan 2016
+                Data provided by the Canadian Urban Transit Association
             </p>
             <!-- <div class="session">
                 <h2>Casualty</h2>
@@ -128,9 +123,9 @@
             });
 
             map.on('load', ()=>{
-                let filterFed = ['!=', ['number',['get', 'Sum of FedOpCont']], 16000000];
-                let filterProv = ['!=', ['number', ['get', 'Sum of ProvOpCont']], 950000000];
-                let filterMun = ['!=', ['number', ['get', 'Sum of MunOpCont']], 1500000000];
+                let filterFed = ['!=', ['number',['get', 'FedOpCont']], 0];
+                let filterProv = ['!=', ['number', ['get', 'ProvOpCont']], 950000000];
+                let filterMun = ['!=', ['number', ['get', 'MunOpCont']], 1500000000];
 
                 map.addSource('FedCont', {
                     type: 'vector',
@@ -144,7 +139,7 @@
 
                     "paint": {
                     //     'circle-radius': [
-                    //         'interpolate', ['linear'], ['number',['get', 'Sum of FedOpCont']],
+                    //         'interpolate', ['linear'], ['number',['get', 'FedOpCont']],
                     //         0,
                     //         5,
                     //         10,
@@ -167,7 +162,7 @@
                     //     ],
                         'circle-opacity':0.8
                     },
-                    'filter': ['all', filterFed, filterProv, filterMun]
+                    'filter': ['all', filterFed]
 
 
                 });
@@ -209,19 +204,20 @@
                         const funding = event.target.value;
 
                         if (funding === 'Fed') {
-                            filterFed = ['!=', ['number', ['get', 'Sum of FedOpCont']], 0];
+                            filterFed = ['!=', ['number', ['get', 'FedOpCont']], 0];
                                 // filterProv = ['==', ['number',['get', 'Sum of Prov']], 950000000]
                                 // filterMun = ['>', ['number',['get', 'Sum of Mun']], 'placeholder']
-                                map.setFilter('FedCon', ['all', filterFed]);
+                            map.setFilter('FedCon', ['all', filterFed]);
                         } else if (funding === 'Prov') {
                             // filterFed = ['==', ['number',['get', 'Sum of FedOpCont']], 1600000];
-                            filterProv = ['!=', ['number',['get', 'Sum of ProvOpCont']], 0]
+                            filterProv = ['!=', ['number',['get', 'ProvOpCont']], 0]
                             // filterMun = ['==', ['number',['get', 'Sum of Mun']], 1500000000]
+                            // map.setPaintProperty('FedCon', 'circle-radius', ['interpolate', ['linear'], ['number',['get', 'ProvOpCont']], 0, 3,6,9,12,15]);
                             map.setFilter('FedCon',['all', filterProv]);
                         } else if (funding === 'Mun') {
                             // filterFed = ['==',['number',['get','Sum of FedOpCont']], 16000000];
                                 // filterProv = ['==', ['number',['get', 'Sum of Prov']], 'placeholder']
-                            filterMun = ['!=', ['number',['get', 'Sum of MunOpCont']], 0]
+                            filterMun = ['!=', ['number',['get', 'MunOpCont']], 0]
                             map.setFilter('FedCon', ['all', filterMun]);
                         } else {
                             console.error('error');
